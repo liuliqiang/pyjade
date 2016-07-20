@@ -48,6 +48,19 @@ class Compiler(object):
       , 'br'
       , 'hr'
     ]
+    systemFunction = [
+        'load',
+        'set_content_type',
+        'redirect',
+        'a_with_selected',
+        'set_per_page',
+        'add_doc_actions'
+    ]
+    inlineFunction = [
+        'need_login',
+        'need_admin',
+        'raise_404'
+    ]
     autocloseCode = 'if,for,block,filter,autoescape,with,trans,spaceless,comment,cache,macro,localize,compress,raw'.split(',')
 
     filters = {}
@@ -163,9 +176,25 @@ class Compiler(object):
           self.buffer('%s%s(%s)%s' % (self.variable_start_string, mixin.name,
                                       mixin.args, self.variable_end_string))
 
+    def visitSystemCmd(self, tag):
+        if tag.name == 'load':
+            if tag.attrs[0]['name'][-4:] == 'scss':
+                self.buffer('\n{}<link href="{}" type="text/css" rel="stylesheet"/>'.format(
+                    '  ' * (self.indents-1), tag.attrs[0]['name']))
+
+    def visitInlineFunction(self, tag):
+        pass
+
     def visitTag(self,tag):
         self.indents += 1
         name = tag.name
+        if name in self.systemFunction:
+            self.visitSystemCmd(tag)
+            return
+        if name in self.inlineFunction:
+            self.visitInlineFunction(tag)
+            return
+
         if not self.hasCompiledTag:
             if not self.hasCompiledDoctype and 'html' == name:
                 self.visitDoctype()
@@ -271,7 +300,14 @@ class Compiler(object):
 
 
     def format_path(self,path):
-        has_extension = '.' in os.path.basename(path)
+        if len(path) < 5:
+            has_extension = False
+        elif path[-4] == 'jade':
+            has_extension = True
+        else:
+            has_extension = False
+
+        # has_extension = '.' in os.path.basename(path)
         if not has_extension:
             path += self.extension
         return path

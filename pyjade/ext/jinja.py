@@ -1,5 +1,6 @@
 from jinja2.ext import Extension
 import os
+import logging
 import pyjade.runtime
 
 from pyjade import Compiler as _Compiler
@@ -114,5 +115,7 @@ class PyJadeExtension(Extension):
     def preprocess(self, source, name, filename=None):
         if (not name or
            (name and not os.path.splitext(name)[1] in self.file_extensions)):
+            msg = "return {}".format(name)
+            logging.info(msg)
             return source
         return process(source,filename=name,compiler=Compiler,**self.options)

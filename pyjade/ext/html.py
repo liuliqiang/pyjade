@@ -33,6 +33,16 @@ def local_context_manager(compiler, local_context):
     yield
     compiler.local_context = old_local_context
 
+class Object(object):
+    pass
+
+def get_data(type, sort, limit):
+    p1 = Object()
+    p1.year='2015'
+    p2 = Object()
+    p2.year='2016'
+    return [{'2015', (p1,)},
+            {'2016', (p2,)}]
 
 class Compiler(pyjade.compiler.Compiler):
     global_context = {}
@@ -43,8 +53,13 @@ class Compiler(pyjade.compiler.Compiler):
         if isinstance(value, six.string_types):
             value = value.encode('utf-8')
         try:
+            self.global_context.update({
+                'get_data': get_data
+            })
+
             value = eval(value, self.global_context, self.local_context)
-        except:
+        except Exception as e:
+            print e
             return None
         return value
 
@@ -75,10 +90,13 @@ class Compiler(pyjade.compiler.Compiler):
         return self._interpolate(text, lambda x: str(self._do_eval(x)))
 
     def visitInclude(self, node):
-        if os.path.exists(node.path):
-            src = open(node.path, 'r').read()
-        elif os.path.exists("%s.jade" % node.path):
-            src = open("%s.jade" % node.path, 'r').read()
+        path = os.path.realpath(".")
+        for p in node.path.split('.'):
+            path = os.path.join(path, p)
+        if os.path.exists(path):
+            src = open(path, 'r').read()
+        elif os.path.exists("%s.jade" % path):
+            src = open("%s.jade" % path, 'r').read()
         else:
             raise Exception("Include path doesn't exists")
 

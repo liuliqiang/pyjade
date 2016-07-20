@@ -107,7 +107,6 @@ def iteration(obj, num_keys):
          b. otherwise return a list of (value,index) tuples
 
     """
-
     # If the object is a mapping type, return it as-is
     if is_mapping(obj):
         return obj
